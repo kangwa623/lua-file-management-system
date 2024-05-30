@@ -1,23 +1,20 @@
-local lfs = require("lfs")
+local lfs = require("lfs")  -- Import the LuaFileSystem (lfs) library for directory manipulation
 
--- Define download and move folder paths, to be set via the Python interface
-local sourceFolder = arg[1] or "downloads"
-local moveFolder = sourceFolder
 
--- Ensure download and move folders exist, create them if they don't
+local sourceFolder = arg[1]  -- Set sourceFolder to the first argument passed to the script
+
+-- Function to ensure the specified folder exists, and create it if it doesn't
 local function ensureFoldersExist()
+    -- Check if the sourceFolder exists
     if not lfs.attributes(sourceFolder, "mode") then
-        os.execute('mkdir "' .. sourceFolder .. '"')
-    end
-    if not lfs.attributes(moveFolder, "mode") then
-        os.execute('mkdir "' .. moveFolder .. '"')
+        os.execute('mkdir "' .. sourceFolder .. '"')  -- Create sourceFolder if it doesn't exist
     end
 end
 
 -- Call the function to ensure folders exist
 ensureFoldersExist()
 
--- Define target folders for various file extensions
+-- Define target folders for various file extensions 
 local targetFolders = {
     [".pdf"] = sourceFolder .. "\\Documents\\PDFs",
     [".txt"] = sourceFolder .. "\\Documents\\TextDoc",
@@ -56,49 +53,46 @@ local targetFolders = {
     [".iso"] = sourceFolder .. "\\Images\\DiscImages"
 }
 
-
 -- Function for moving a file to its corresponding folder based on extension
 local function moveFile(filePath)
-    local fileName = string.match(filePath, "[^\\]+$")
-    local fileExt = string.match(fileName, "%..+$")
-    local targetFolder = targetFolders[fileExt]
-    if targetFolder then
-        -- Check if target folder exists, create it if not
+    local fileName = string.match(filePath, "[^\\]+$")  -- Extract the file name from the file path
+    local fileExt = string.match(fileName, "%..+$")  -- Extract the file extension from the file name
+    local targetFolder = targetFolders[fileExt]  -- Look up the target folder for the file extension
+    if targetFolder then  -- If a target folder is defined for this extension
+        -- Check if the target folder exists, create it if not
         if not lfs.attributes(targetFolder, "mode") then
-            os.execute('mkdir "' .. targetFolder .. '"')
+            os.execute('mkdir "' .. targetFolder .. '"')  -- Create the target folder if it doesn't exist
         end
-        -- Attempt to move the file
-        local targetPath = targetFolder .. "\\" .. fileName
-        local success, err = os.rename(filePath, targetPath)
+        -- Attempt to move the file to the target folder
+        local targetPath = targetFolder .. "\\" .. fileName  -- Construct the target file path
+        local success, err = os.rename(filePath, targetPath)  -- Move the file
         if success then
-            print("Moved " .. fileName .. " to " .. targetFolder)
+            print("Moved " .. fileName .. " to " .. targetFolder)  -- Print a success message
         else
-            -- Handle error if move fails (e.g., permission issue)
-            print("Error moving " .. fileName .. ": " .. err)
+            -- Handle error if the move fails (e.g., permission issue)
+            print("Error moving " .. fileName .. ": " .. err)  -- Print an error message
         end
     end
 end
 
--- Function to scan the download folder for new files
+-- Function to scan the specified folder for new files
 local function scanFolder()
-    for file in lfs.dir(sourceFolder) do
-        if file ~= "." and file ~= ".." then
-            local filePath = sourceFolder .. "\\" .. file
-            local attr = lfs.attributes(filePath)
-            if attr and attr.mode == "file" then
-                moveFile(filePath)
+    for file in lfs.dir(sourceFolder) do  -- Iterate over all files in the sourceFolder
+        if file ~= "." and file ~= ".." then  -- Ignore the current and parent directory entries
+            local filePath = sourceFolder .. "\\" .. file  -- Construct the full file path
+            local attr = lfs.attributes(filePath)  -- Get the file attributes
+            if attr and attr.mode == "file" then  -- If the item is a file
+                moveFile(filePath)  -- Move the file to the corresponding folder
             end
         end
     end
 end
 
--- Initial scan
+-- Initial scan to move existing files
 scanFolder()
 
 -- Polling loop to check for new files every 1 second
 while true do
-    scanFolder()
-    os.execute("timeout /t 1 /nobreak >nul")
+    scanFolder()  -- Scan the folder for new files
+    os.execute("timeout /t 1 /nobreak >nul")  -- Wait for 1 second before the next scan (Windows-specific)
 end
-
-print("Download folder organization completed!")
