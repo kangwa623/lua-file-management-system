@@ -1,7 +1,7 @@
-local lfs = require("lfs")  -- Import the LuaFileSystem (lfs) library for directory manipulation
+local lfs = require("lfs") 
 
 
-local sourceFolder = arg[1]  -- Set sourceFolder to the first argument passed to the script
+local sourceFolder = arg[1]  -- Set sourceFolder to the first argument passed to the script from the front end 
 
 -- Function to ensure the specified folder exists, and create it if it doesn't
 local function ensureFoldersExist()
@@ -11,7 +11,6 @@ local function ensureFoldersExist()
     end
 end
 
--- Call the function to ensure folders exist
 ensureFoldersExist()
 
 -- Define target folders for various file extensions 
@@ -58,7 +57,7 @@ local function moveFile(filePath)
     local fileName = string.match(filePath, "[^\\]+$")  -- Extract the file name from the file path
     local fileExt = string.match(fileName, "%..+$")  -- Extract the file extension from the file name
     local targetFolder = targetFolders[fileExt]  -- Look up the target folder for the file extension
-    if targetFolder then  -- If a target folder is defined for this extension
+    if targetFolder then 
         -- Check if the target folder exists, create it if not
         if not lfs.attributes(targetFolder, "mode") then
             os.execute('mkdir "' .. targetFolder .. '"')  -- Create the target folder if it doesn't exist
@@ -67,10 +66,10 @@ local function moveFile(filePath)
         local targetPath = targetFolder .. "\\" .. fileName  -- Construct the target file path
         local success, err = os.rename(filePath, targetPath)  -- Move the file
         if success then
-            print("Moved " .. fileName .. " to " .. targetFolder)  -- Print a success message
+            print("Moved " .. fileName .. " to " .. targetFolder)  
         else
             -- Handle error if the move fails (e.g., permission issue)
-            print("Error moving " .. fileName .. ": " .. err)  -- Print an error message
+            print("Error moving " .. fileName .. ": " .. err) 
         end
     end
 end
@@ -78,10 +77,10 @@ end
 -- Function to scan the specified folder for new files
 local function scanFolder()
     for file in lfs.dir(sourceFolder) do  -- Iterate over all files in the sourceFolder
-        if file ~= "." and file ~= ".." then  -- Ignore the current and parent directory entries
+        if file ~= "." and file ~= ".." then  -- 
             local filePath = sourceFolder .. "\\" .. file  -- Construct the full file path
-            local attr = lfs.attributes(filePath)  -- Get the file attributes
-            if attr and attr.mode == "file" then  -- If the item is a file
+            local attr = lfs.attributes(filePath)  
+            if attr and attr.mode == "file" then  
                 moveFile(filePath)  -- Move the file to the corresponding folder
             end
         end
@@ -94,5 +93,5 @@ scanFolder()
 -- Polling loop to check for new files every 1 second
 while true do
     scanFolder()  -- Scan the folder for new files
-    os.execute("timeout /t 1 /nobreak >nul")  -- Wait for 1 second before the next scan (Windows-specific)
+    os.execute("timeout /t 1 /nobreak >nul") 
 end
